@@ -5,6 +5,8 @@
 #include <cstdint>
 #include <cstdlib>
 #include <string>
+#include <initializer_list>
+#include <utility>
 #include <vector>
 
 namespace gdhistory::api {
