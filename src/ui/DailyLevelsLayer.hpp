@@ -13,6 +13,7 @@ public:
     static cocos2d::CCScene* scene();
     static GDHistoryDailyLevelsLayer* create();
     bool init();
+    void onExit() override;
 
 private:
     gdhistory::api::Client m_client;
