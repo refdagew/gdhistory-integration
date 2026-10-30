@@ -74,8 +74,4 @@ class $modify(GDHistoryLevelSearchLayer, LevelSearchLayer) {
     void onSpecialDemon(CCObject*) {
         this->showUnsupportedSearchMode("Special Demon");
     }
-
-    void onStarAward(CCObject*) {
-        this->showUnsupportedSearchMode("Star Award");
-    }
 };
