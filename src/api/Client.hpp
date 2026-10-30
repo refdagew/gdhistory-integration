@@ -12,6 +12,7 @@
 #include <utility>
 
 #include "Endpoints.hpp"
+#include "Json.hpp"
 
 namespace gdhistory::api {
 
@@ -20,6 +21,7 @@ namespace gdhistory::api {
 class Client {
 public:
     using ResponseCallback = std::function<void(geode::utils::web::WebResponse)>;
+    using JsonCallback = std::function<void(JsonResponse)>;
 
     Client() = default;
     Client(Client const&) = delete;
@@ -58,6 +60,37 @@ public:
     /// Retrieve GDHistory's daily-level collection.
     void getDailyLevels(ResponseCallback callback) {
         this->get(dailyLevels(), std::move(callback));
+    }
+
+    void searchLevelsJSON(
+        std::string query,
+        int limit,
+        int offset,
+        JsonCallback callback
+    ) {
+        this->searchLevels(
+            std::move(query), limit, offset,
+            [callback = std::move(callback)](geode::utils::web::WebResponse response) mutable {
+                callback(parseJsonResponse(response));
+            }
+        );
+    }
+
+    void getLevelRecordsJSON(std::uint64_t levelID, JsonCallback callback) {
+        this->getLevelRecords(
+            levelID,
+            [callback = std::move(callback)](geode::utils::web::WebResponse response) mutable {
+                callback(parseJsonResponse(response));
+            }
+        );
+    }
+
+    void getDailyLevelsJSON(JsonCallback callback) {
+        this->getDailyLevels(
+            [callback = std::move(callback)](geode::utils::web::WebResponse response) mutable {
+                callback(parseJsonResponse(response));
+            }
+        );
     }
 
     /// Download a historical record in GMD format. GDLVL is intentionally
