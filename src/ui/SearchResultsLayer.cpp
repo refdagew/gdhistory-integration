@@ -51,6 +51,10 @@ bool GDHistorySearchResultsLayer::init(std::string query, std::string sort) {
     m_resultsMenu->setPosition({0.f, 0.f});
     this->addChild(m_resultsMenu);
 
+    m_navigationMenu = CCMenu::create();
+    m_navigationMenu->setPosition({0.f, 0.f});
+    this->addChild(m_navigationMenu);
+
     auto previousLabel = CCLabelBMFont::create("Previous", "bigFont.fnt");
     previousLabel->setScale(0.45f);
     m_previousItem = CCMenuItemLabel::create(
@@ -58,7 +62,7 @@ bool GDHistorySearchResultsLayer::init(std::string query, std::string sort) {
     );
     m_previousItem->setPosition({winSize.width / 2.f - 75.f, 65.f});
     m_previousItem->setEnabled(false);
-    m_resultsMenu->addChild(m_previousItem);
+    m_navigationMenu->addChild(m_previousItem);
 
     auto nextLabel = CCLabelBMFont::create("Next", "bigFont.fnt");
     nextLabel->setScale(0.45f);
@@ -67,7 +71,7 @@ bool GDHistorySearchResultsLayer::init(std::string query, std::string sort) {
     );
     m_nextItem->setPosition({winSize.width / 2.f + 75.f, 65.f});
     m_nextItem->setEnabled(false);
-    m_resultsMenu->addChild(m_nextItem);
+    m_navigationMenu->addChild(m_nextItem);
 
     auto backLabel = CCLabelBMFont::create("Back", "bigFont.fnt");
     auto backItem = CCMenuItemLabel::create(
@@ -86,8 +90,6 @@ bool GDHistorySearchResultsLayer::init(std::string query, std::string sort) {
 void GDHistorySearchResultsLayer::requestPage() {
     m_results.clear();
     m_resultsMenu->removeAllChildrenWithCleanup(true);
-    m_resultsMenu->addChild(m_previousItem);
-    m_resultsMenu->addChild(m_nextItem);
     m_previousItem->setEnabled(m_offset > 0);
     m_nextItem->setEnabled(false);
     m_status->setString("Searching GDHistory...");
