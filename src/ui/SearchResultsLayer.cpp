@@ -2,6 +2,8 @@
 
 #include <Geode/binding/PlayLayer.hpp>
 
+#include "../api/GMDLoader.hpp"
+
 
 #include <algorithm>
 #include <utility>
