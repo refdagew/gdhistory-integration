@@ -100,8 +100,7 @@ public:
         std::uint64_t recordID,
         ResponseCallback callback
     ) {
-        auto request = baseRequest();
-        request.header("Accept", "*/*");
+        auto request = baseRequest("*/*");
         this->send(
             std::move(request),
             ::gdhistory::api::downloadGMD(levelID, recordID),
@@ -112,10 +111,10 @@ public:
 private:
     geode::async::TaskHolder<geode::utils::web::WebResponse> m_request;
 
-    static geode::utils::web::WebRequest baseRequest() {
+    static geode::utils::web::WebRequest baseRequest(std::string accept = "application/json") {
         auto request = geode::utils::web::WebRequest();
         request
-            .header("Accept", "application/json")
+            .header("Accept", std::move(accept))
             .userAgent("gdhistory-integration/0.1.0 (Geode mod)")
             .timeout(std::chrono::seconds(30))
             .followRedirects(true);
