@@ -37,13 +37,14 @@ public:
         std::string query,
         int limit,
         int offset,
-        ResponseCallback callback
+        ResponseCallback callback,
+        std::string sort = "cache_downloads:desc"
     ) {
         auto request = baseRequest();
         request
             .param("limit", std::max(1, std::min(limit, 1000)))
             .param("offset", std::max(0, offset))
-            .param("sort", "cache_downloads:desc");
+            .param("sort", std::move(sort));
 
         if (!query.empty()) {
             request.param("query", std::move(query));
@@ -66,13 +67,15 @@ public:
         std::string query,
         int limit,
         int offset,
-        JsonCallback callback
+        JsonCallback callback,
+        std::string sort = "cache_downloads:desc"
     ) {
         this->searchLevels(
             std::move(query), limit, offset,
             [callback = std::move(callback)](geode::utils::web::WebResponse response) mutable {
                 callback(parseJsonResponse(response));
-            }
+            },
+            std::move(sort)
         );
     }
 
