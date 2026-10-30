@@ -31,7 +31,7 @@ GMD download route (confirmed by the supplied gdhistorydl 1.7.0 extension):
 - The extension's previous configurable format switch also supported `gdlvl`; this project hard-codes `gmd` as requested.
 - The route is a website download endpoint, distinct from the documented JSON API. The mod must request it directly using native Geode networking and consume the returned GMD payload; it must not navigate a browser.
 
-Important: GDHistory's API documentation warns that the API is unfinished and may have breaking changes. Validate live JSON and download responses before locking parser assumptions.
+Important: GDHistory's API documentation warns that the API is unfinished and may have breaking changes. The repository backend source has now been inspected for the current search and daily response shapes, but live endpoint behavior still needs in-game verification.
 
 ## Architecture
 1. Native HTTP client
@@ -54,14 +54,14 @@ Important: GDHistory's API documentation warns that the API is unfinished and ma
    - Fetch `/api/v1/level/{id}/`.
    - Extract record IDs from the actual response schema and sort descending numerically.
    - Request each candidate from `/level/{id}/{record_id}/download/gmd/`.
-   - Detect the exact no-level-data response from live response bodies; only that condition triggers fallback.
+   - Detect the exact no-level-data response from GDHistory's backend source; only that condition triggers fallback.
    - Parse the GMD payload into the level object expected by Geometry Dash 2.2081.
    - Do not treat arbitrary HTTP errors, malformed payloads, or network failures as missing level data.
 
 5. Daily levels
    - Fetch `/api/v1/daily/`.
-   - Inspect actual returned type/year categories before implementing mappings.
-   - Expose daily/weekly/event categories only where present in the response.
+   - Backend source currently constructs top-level year collections for daily levels plus separate `Weekly` and `Event` collections. Each level entry includes `online_id`, `cache_level_name`, `cache_username`, and `cache_daily_id`.
+   - The adapter maps year buckets to Daily, preserves Weekly/Event categories, deduplicates by level ID, and sorts newest-first by the archive ID.
    - Reuse the same result conversion and GMD downloader.
 
 6. Unsupported features / server isolation
@@ -70,11 +70,11 @@ Important: GDHistory's API documentation warns that the API is unfinished and ma
    - Do not disable unrelated offline or editor features.
 
 ## Milestones
-1. Bootstrap Geode project metadata, CMake, source layout, README, and Windows-only support.
-2. Implement native GDHistory HTTP client and verify live endpoint payloads.
+1. Bootstrap Geode project metadata, CMake, source layout, and Windows-only support.
+2. Implement native GDHistory HTTP client and inspect backend response schemas.
 3. Implement in-game search and result conversion.
 4. Implement GMD-only historical downloader and no-data fallback.
-5. Implement daily data adapter from the live response schema.
+5. Implement daily data adapter from the backend's current response schema.
 6. Disable unsupported online surfaces and audit server isolation.
 7. Build and test against Geometry Dash 2.2081 / Geode 5.11.2 on Windows.
 
@@ -91,25 +91,27 @@ Important: GDHistory's API documentation warns that the API is unfinished and ma
 
 The repository currently includes:
 - Native asynchronous Geode WebRequest client for search, level records, daily data, and GMD downloads.
-- JSON response validation and tolerant search/record parsing.
+- JSON response validation and tolerant search/record parsing against the backend's Meilisearch response structure (`hits`).
 - Newest-first historical record downloader. It retries only when the response contains GDHistory's explicit no-level-data message.
-- GMD import through the `hjfod.gmd-api` dependency (version 1.5.0 or newer), which supports Geometry Dash 2.2081.
-- Initial in-game search results layer wired to `LevelSearchLayer::onSearch`.
-- Initial in-game daily archive layer wired to `DailyLevelPage::show`.
+- GMD import through the `hjfod.gmd-api` dependency (version 1.5.0 or newer).
+- In-game search results layer wired to `LevelSearchLayer::onSearch`, with pagination.
+- In-game daily archive layer wired to `DailyLevelPage::show`, with pagination and GMD download/play.
+- Daily archive parsing now correctly classifies year buckets as Daily, keeps Weekly/Event categories, displays archive IDs, and sorts newest-first.
 
 Not yet complete or verified:
-- Exact live response schema for `/api/v1/daily/` and level-record payloads must be validated in-game.
-- Search pagination, creator/difficulty/download filters, and the remaining search modes.
-- Complete Map Pack, Gauntlet, comments, likes, ratings, and leaderboard disablement.
+- Actual HTTP payloads and GMD imports still need runtime validation in Geometry Dash 2.2081.
+- Search pagination and filters need UI/runtime testing.
+- Complete Map Pack, Gauntlet, comments, likes, ratings, and leaderboard disablement needs a binding audit.
 - Audit of all remaining RobTop network entry points.
-- Windows build and runtime test against the target SDK/game versions.
+- Windows build after the latest daily archive changes and runtime test against the target game version.
 
-The current UI is an initial functional path, not a finished replacement. The repository should not be considered release-ready until the remaining items are implemented and tested.
+The current UI is an initial usable path, not a finished replacement. The repository should not be considered release-ready until the remaining items are implemented and tested.
 
 ## Latest implementation notes
 
-- Search results now request nine results per page and expose Previous/Next navigation.
-- The daily archive now exposes Previous/Next navigation over parsed GDHistory timely-level entries.
+- Search results request nine results per page and expose Previous/Next navigation.
+- Daily archive uses GDHistory's current year/Weekly/Event JSON grouping; entries now show archive number, category, and year.
+- Daily archive entries are sorted by GDHistory's archive ID descending so recent entries appear first.
 - The Creator menu routes Online Levels to the GDHistory-backed search layer, and Daily/Weekly/Event entry points to the GDHistory archive.
 - Map Packs, Gauntlets, leaderboards, Top Lists, Hall of Fame, challenges, multiplayer, and Paths are blocked with an in-game unsupported-feature message.
 - Level-info actions for likes, ratings, moderator ratings, leaderboards, updates, featured requests, creator profiles, and online level information are blocked.
