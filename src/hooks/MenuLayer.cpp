@@ -1,6 +1,8 @@
 #include <Geode/Geode.hpp>
 #include <Geode/modify/MenuLayer.hpp>
 
+#include "../ui/DailyLevelsLayer.hpp"
+
 using namespace geode::prelude;
 
 class $modify(GDHistoryMenuLayer, MenuLayer) {
@@ -10,6 +12,21 @@ class $modify(GDHistoryMenuLayer, MenuLayer) {
             fmt::format("{} are unavailable because GDHistory does not provide this feature.", feature).c_str(),
             "OK"
         )->show();
+    }
+
+    void openGDHistoryDailyArchive() {
+        auto scene = GDHistoryDailyLevelsLayer::scene();
+        if (scene) {
+            CCDirector::sharedDirector()->pushScene(scene);
+        }
+    }
+
+    void onDaily(CCObject*) {
+        this->openGDHistoryDailyArchive();
+    }
+
+    void onWeeklyLevel(CCObject*) {
+        this->openGDHistoryDailyArchive();
     }
 
     void onMapPacks(CCObject*) {
