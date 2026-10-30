@@ -81,14 +81,19 @@ inline void collectTimedLevels(
 
         if (isYearKey(key)) {
             nextYear = key;
+            // GDHistory's current /daily/ response uses year keys for daily
+            // levels, alongside the separate Weekly and Event collections.
+            if (nextCategory.empty()) {
+                nextCategory = "daily";
+            }
         }
 
         collectTimedLevels(child, std::move(nextCategory), std::move(nextYear), output);
     }
 }
 
-/// The daily endpoint is documented as grouping timely levels by type/year.
-/// Walk the returned tree rather than assuming a fixed nesting depth.
+/// Parse GDHistory's /api/v1/daily/ response, which groups daily levels by
+/// year and exposes Weekly and Event as separate top-level collections.
 inline std::vector<TimedLevelResult> parseDailyLevels(matjson::Value const& payload) {
     std::vector<TimedLevelResult> levels;
     collectTimedLevels(payload, {}, {}, levels);
@@ -103,6 +108,13 @@ inline std::vector<TimedLevelResult> parseDailyLevels(matjson::Value const& payl
             unique.push_back(std::move(level));
         }
     }
+
+    // cache_daily_id is a monotonically increasing archive identifier. Sorting
+    // descending puts the newest daily/weekly/event entries first regardless
+    // of the JSON object's category ordering.
+    std::stable_sort(unique.begin(), unique.end(), [](auto const& left, auto const& right) {
+        return left.dailyNumber > right.dailyNumber;
+    });
 
     return unique;
 }
