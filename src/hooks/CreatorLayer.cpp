@@ -1,5 +1,6 @@
 #include <Geode/Geode.hpp>
 #include <Geode/modify/CreatorLayer.hpp>
+#include <Geode/binding/LevelSearchLayer.hpp>
 
 #include "../ui/DailyLevelsLayer.hpp"
 
@@ -29,11 +30,42 @@ class $modify(GDHistoryCreatorLayer, CreatorLayer) {
         this->openGDHistoryDailyArchive();
     }
 
+    void onEventLevel(CCObject*) {
+        this->openGDHistoryDailyArchive();
+    }
+
+    void onOnlineLevels(CCObject*) {
+        auto scene = LevelSearchLayer::scene(0);
+        if (scene) {
+            CCDirector::sharedDirector()->pushScene(scene);
+        }
+    }
+
     void onMapPacks(CCObject*) {
         this->showUnsupportedFeature("Map Packs");
     }
 
     void onGauntlets(CCObject*) {
         this->showUnsupportedFeature("Gauntlets");
+    }
+
+    void onLeaderboards(CCObject*) {
+        this->showUnsupportedFeature("Leaderboards");
+    }
+
+    void onTopLists(CCObject*) {
+        this->showUnsupportedFeature("Top lists");
+    }
+
+    void onFameLevels(CCObject*) {
+        this->showUnsupportedFeature("Hall of Fame");
+    }
+
+    void onChallenge(CCObject*) {
+        this->showUnsupportedFeature("Challenges");
+    }
+
+    void onMultiplayer(CCObject*) {
+        this->showUnsupportedFeature("Multiplayer");
     }
 };
