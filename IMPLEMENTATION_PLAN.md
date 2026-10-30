@@ -105,3 +105,15 @@ Not yet complete or verified:
 - Windows build and runtime test against the target SDK/game versions.
 
 The current UI is an initial functional path, not a finished replacement. The repository should not be considered release-ready until the remaining items are implemented and tested.
+
+## Latest implementation notes
+
+- Search results now request nine results per page and expose Previous/Next navigation.
+- The daily archive now exposes Previous/Next navigation over parsed GDHistory timely-level entries.
+- The Creator menu routes Online Levels to the GDHistory-backed search layer, and Daily/Weekly/Event entry points to the GDHistory archive.
+- Map Packs, Gauntlets, leaderboards, Top Lists, Hall of Fame, challenges, multiplayer, and Paths are blocked with an in-game unsupported-feature message.
+- Level-info actions for likes, ratings, moderator ratings, leaderboards, updates, featured requests, creator profiles, and online level information are blocked.
+- The normal MenuLayer daily entry point opens the GDHistory archive.
+- A Windows x64 GitHub Actions build is configured using the SDK version declared in mod.json.
+
+These changes are implementation progress only. A successful CI build and in-game test are still required before claiming compatibility or release readiness.
