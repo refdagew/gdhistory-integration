@@ -28,10 +28,6 @@ class $modify(GDHistoryLevelInfoLayer, LevelInfoLayer) {
         this->showGDHistoryUnavailable("Star ratings");
     }
 
-    void onRateStarsMod(CCObject*) {
-        this->showGDHistoryUnavailable("Moderator ratings");
-    }
-
     void onLevelLeaderboard(CCObject*) {
         this->showGDHistoryUnavailable("Level leaderboards");
     }
