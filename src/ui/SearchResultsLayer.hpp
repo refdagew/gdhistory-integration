@@ -22,6 +22,7 @@ private:
     gdhistory::api::LevelDownloader m_downloader;
     cocos2d::CCLabelBMFont* m_status = nullptr;
     cocos2d::CCMenu* m_resultsMenu = nullptr;
+    cocos2d::CCMenu* m_navigationMenu = nullptr;
     cocos2d::CCMenuItemLabel* m_previousItem = nullptr;
     cocos2d::CCMenuItemLabel* m_nextItem = nullptr;
     std::vector<gdhistory::api::LevelSearchResult> m_results;
