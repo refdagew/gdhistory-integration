@@ -28,11 +28,27 @@ class $modify(GDHistoryLevelInfoLayer, LevelInfoLayer) {
         this->showGDHistoryUnavailable("Star ratings");
     }
 
+    void onRateStarsMod(CCObject*) {
+        this->showGDHistoryUnavailable("Moderator star ratings");
+    }
+
     void onLevelLeaderboard(CCObject*) {
         this->showGDHistoryUnavailable("Level leaderboards");
     }
 
     void onUpdate(CCObject*) {
         this->showGDHistoryUnavailable("RobTop level updates");
+    }
+
+    void onFeatured(CCObject*) {
+        this->showGDHistoryUnavailable("Featured-level requests");
+    }
+
+    void onViewProfile(CCObject*) {
+        this->showGDHistoryUnavailable("Creator profiles");
+    }
+
+    void onLevelInfo(CCObject*) {
+        this->showGDHistoryUnavailable("Level comments and online information");
     }
 };
