@@ -90,8 +90,8 @@ inline std::vector<LevelSearchResult> parseSearchResults(matjson::Value const& p
         result.levelID = firstID(entry, {"online_id", "id"});
         if (result.levelID == 0) continue;
 
-        result.name = firstString(entry, {"name", "level_name"});
-        result.creator = firstString(entry, {"creator", "creator_name", "username"});
+        result.name = firstString(entry, {"name", "level_name", "cache_level_name"});
+        result.creator = firstString(entry, {"creator", "creator_name", "username", "cache_username"});
         result.downloads = firstID(entry, {"cache_downloads", "downloads"});
         result.difficulty = static_cast<int>(
             firstID(entry, {"cache_filter_difficulty", "difficulty"})
