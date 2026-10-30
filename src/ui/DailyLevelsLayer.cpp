@@ -130,8 +130,12 @@ void GDHistoryDailyLevelsLayer::renderPage() {
     auto winSize = CCDirector::sharedDirector()->getWinSize();
     for (std::size_t index = m_offset; index < end; ++index) {
         auto const& level = m_levels[index];
+        auto archiveNumber = level.dailyNumber > 0
+            ? fmt::format("#{}", level.dailyNumber)
+            : fmt::format("ID {}", level.levelID);
         auto labelText = fmt::format(
-            "{} [{}{}]  |  {}",
+            "{} {} [{}{}]  |  {}",
+            archiveNumber,
             level.name.empty() ? fmt::format("Level {}", level.levelID) : level.name,
             level.category.empty() ? "timed" : level.category,
             level.year.empty() ? "" : " " + level.year,
