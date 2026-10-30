@@ -1,11 +1,11 @@
 #include "SearchResultsLayer.hpp"
 
 #include <Geode/binding/PlayLayer.hpp>
-#include <hjfod.gmd-api/include/GMD.hpp>
+
 
 #include <algorithm>
 #include <utility>
-#include <fstream>
+
 
 using namespace geode::prelude;
 
@@ -132,38 +132,17 @@ void GDHistorySearchResultsLayer::onSelectLevel(CCObject* sender) {
                 return;
             }
 
-            auto bytes = gdhistory::api::responseBytes(*result.response);
-            auto path = Mod::get()->getSaveDir() /
-                fmt::format("level_{}_{}.gmd", levelID, result.recordID);
-
-            std::ofstream output(path, std::ios::binary | std::ios::trunc);
-            if (!output) {
-                m_status->setString("Could not create a temporary GMD file.");
+            auto imported = gdhistory::api::importGMD(
+                *result.response,
+                levelID,
+                result.recordID
+            );
+            if (!imported.ok()) {
+                m_status->setString(imported.error.c_str());
                 return;
             }
 
-            output.write(bytes.data(), static_cast<std::streamsize>(bytes.size()));
-            output.close();
-            if (!output) {
-                m_status->setString("Could not write the downloaded GMD file.");
-                return;
-            }
-
-            auto imported = gmd::importGmdAsLevel(path);
-            if (!imported) {
-                m_status->setString(
-                    fmt::format("Could not import GMD: {}", imported.unwrapErr()).c_str()
-                );
-                return;
-            }
-
-            auto level = imported.unwrap();
-            if (!level) {
-                m_status->setString("GMD import returned an empty level.");
-                return;
-            }
-
-            level->setLevelID(static_cast<int>(levelID));
+            auto level = imported.level;
             auto playScene = PlayLayer::scene(level, false, false);
             if (!playScene) {
                 m_status->setString("Geometry Dash could not create a play scene for this level.");
