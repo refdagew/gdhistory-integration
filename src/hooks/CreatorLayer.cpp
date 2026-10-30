@@ -49,6 +49,10 @@ class $modify(GDHistoryCreatorLayer, CreatorLayer) {
         this->showUnsupportedFeature("Gauntlets");
     }
 
+    void onFeaturedLevels(CCObject*) {
+        this->showUnsupportedFeature("Featured levels");
+    }
+
     void onLeaderboards(CCObject*) {
         this->showUnsupportedFeature("Leaderboards");
     }
@@ -67,5 +71,9 @@ class $modify(GDHistoryCreatorLayer, CreatorLayer) {
 
     void onMultiplayer(CCObject*) {
         this->showUnsupportedFeature("Multiplayer");
+    }
+
+    void onPaths(CCObject*) {
+        this->showUnsupportedFeature("Paths");
     }
 };
