@@ -49,6 +49,7 @@ public:
         this->cancel();
 
         m_levelID = levelID;
+        m_nextIndex = 0;
         m_records = std::move(recordIDs);
         m_callback = std::move(callback);
 
