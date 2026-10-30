@@ -48,6 +48,28 @@ bool GDHistoryDailyLevelsLayer::init() {
     m_resultsMenu->setPosition({0.f, 0.f});
     this->addChild(m_resultsMenu);
 
+    m_navigationMenu = CCMenu::create();
+    m_navigationMenu->setPosition({0.f, 0.f});
+    this->addChild(m_navigationMenu);
+
+    auto previousLabel = CCLabelBMFont::create("Previous", "bigFont.fnt");
+    previousLabel->setScale(0.45f);
+    m_previousItem = CCMenuItemLabel::create(
+        previousLabel, this, menu_selector(GDHistoryDailyLevelsLayer::onPreviousPage)
+    );
+    m_previousItem->setPosition({winSize.width / 2.f - 75.f, 65.f});
+    m_previousItem->setEnabled(false);
+    m_navigationMenu->addChild(m_previousItem);
+
+    auto nextLabel = CCLabelBMFont::create("Next", "bigFont.fnt");
+    nextLabel->setScale(0.45f);
+    m_nextItem = CCMenuItemLabel::create(
+        nextLabel, this, menu_selector(GDHistoryDailyLevelsLayer::onNextPage)
+    );
+    m_nextItem->setPosition({winSize.width / 2.f + 75.f, 65.f});
+    m_nextItem->setEnabled(false);
+    m_navigationMenu->addChild(m_nextItem);
+
     auto backLabel = CCLabelBMFont::create("Back", "bigFont.fnt");
     auto backItem = CCMenuItemLabel::create(
         backLabel,
@@ -79,15 +101,29 @@ void GDHistoryDailyLevelsLayer::onDailyResponse(gdhistory::api::JsonResponse res
         return;
     }
 
+    this->renderPage();
+}
+
+void GDHistoryDailyLevelsLayer::renderPage() {
+    static constexpr std::size_t PAGE_SIZE = 9;
+    m_resultsMenu->removeAllChildrenWithCleanup(true);
+
+    auto const end = std::min(m_offset + PAGE_SIZE, m_levels.size());
     m_status->setString(
-        fmt::format("{} daily archive entries (select one to play)", m_levels.size()).c_str()
+        fmt::format(
+            "Showing {}-{} of {} timely levels",
+            m_offset + 1,
+            end,
+            m_levels.size()
+        ).c_str()
     );
 
-    auto winSize = CCDirector::sharedDirector()->getWinSize();
-    auto const visibleCount = std::min<std::size_t>(m_levels.size(), 12);
+    m_previousItem->setEnabled(m_offset > 0);
+    m_nextItem->setEnabled(end < m_levels.size());
 
-    for (std::size_t i = 0; i < visibleCount; ++i) {
-        auto const& level = m_levels[i];
+    auto winSize = CCDirector::sharedDirector()->getWinSize();
+    for (std::size_t index = m_offset; index < end; ++index) {
+        auto const& level = m_levels[index];
         auto labelText = fmt::format(
             "{} [{}{}]  |  {}",
             level.name.empty() ? fmt::format("Level {}", level.levelID) : level.name,
@@ -104,13 +140,27 @@ void GDHistoryDailyLevelsLayer::onDailyResponse(gdhistory::api::JsonResponse res
             this,
             menu_selector(GDHistoryDailyLevelsLayer::onSelectLevel)
         );
-        item->setTag(static_cast<int>(i));
+        item->setTag(static_cast<int>(index));
         item->setPosition({
             winSize.width / 2.f,
-            winSize.height - 118.f - static_cast<float>(i) * 31.f
+            winSize.height - 118.f - static_cast<float>(index - m_offset) * 31.f
         });
         m_resultsMenu->addChild(item);
     }
+}
+
+void GDHistoryDailyLevelsLayer::onPreviousPage(CCObject*) {
+    static constexpr std::size_t PAGE_SIZE = 9;
+    if (m_offset < PAGE_SIZE) return;
+    m_offset -= PAGE_SIZE;
+    this->renderPage();
+}
+
+void GDHistoryDailyLevelsLayer::onNextPage(CCObject*) {
+    static constexpr std::size_t PAGE_SIZE = 9;
+    if (m_offset + PAGE_SIZE >= m_levels.size()) return;
+    m_offset += PAGE_SIZE;
+    this->renderPage();
 }
 
 void GDHistoryDailyLevelsLayer::onSelectLevel(CCObject* sender) {
