@@ -61,10 +61,6 @@ class $modify(GDHistoryCreatorLayer, CreatorLayer) {
         this->showUnsupportedFeature("Top lists");
     }
 
-    void onFameLevels(CCObject*) {
-        this->showUnsupportedFeature("Hall of Fame");
-    }
-
     void onChallenge(CCObject*) {
         this->showUnsupportedFeature("Challenges");
     }
