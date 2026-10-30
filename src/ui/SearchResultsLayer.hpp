@@ -14,6 +14,7 @@ public:
     static cocos2d::CCScene* scene(std::string query, std::string sort = "cache_downloads:desc");
     static GDHistorySearchResultsLayer* create(std::string query, std::string sort);
     bool init(std::string query, std::string sort);
+    void onExit() override;
 
 private:
     static constexpr int PAGE_SIZE = 9;
