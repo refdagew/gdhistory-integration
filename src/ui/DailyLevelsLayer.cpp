@@ -9,6 +9,12 @@
 
 using namespace geode::prelude;
 
+void GDHistoryDailyLevelsLayer::onExit() {
+    m_client.cancel();
+    m_downloader.cancel();
+    CCLayerColor::onExit();
+}
+
 CCScene* GDHistoryDailyLevelsLayer::scene() {
     auto scene = CCScene::create();
     auto layer = GDHistoryDailyLevelsLayer::create();
