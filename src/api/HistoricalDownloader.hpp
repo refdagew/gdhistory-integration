@@ -89,11 +89,6 @@ private:
                 auto body = responseBytes(response);
 
                 if (isRecordWithoutLevelData(body)) {
-                    log::debug(
-                        "GDHistory record {} for level {} has no level data; trying older record.",
-                        recordID,
-                        m_levelID
-                    );
                     this->tryNextRecord();
                     return;
                 }
