@@ -1,12 +1,15 @@
 #include <Geode/Geode.hpp>
 #include <Geode/modify/LevelSearchLayer.hpp>
 
-#include "../ui/SearchResultsLayer.cpp"
+#include "../ui/SearchResultsLayer.hpp"
+
+#include <string>
+#include <utility>
 
 using namespace geode::prelude;
 
 class $modify(GDHistoryLevelSearchLayer, LevelSearchLayer) {
-    void onSearch(CCObject* sender) {
+    void onSearch(CCObject*) {
         auto query = m_searchInput
             ? std::string(m_searchInput->getString().c_str())
             : std::string{};
