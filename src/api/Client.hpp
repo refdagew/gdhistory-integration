@@ -104,7 +104,7 @@ public:
         request.header("Accept", "*/*");
         this->send(
             std::move(request),
-            api::downloadGMD(levelID, recordID),
+            ::gdhistory::api::downloadGMD(levelID, recordID),
             std::move(callback)
         );
     }
