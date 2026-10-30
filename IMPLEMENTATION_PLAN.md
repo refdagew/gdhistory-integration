@@ -86,3 +86,22 @@ Important: GDHistory's API documentation warns that the API is unfinished and ma
 - Unsupported online features are disabled and cannot contact RobTop.
 - API/network failures are visible and never trigger a RobTop fallback.
 - The project builds for Windows x64 against Geode 5.11.2 and Geometry Dash 2.2081.
+
+## Implementation status
+
+The repository currently includes:
+- Native asynchronous Geode WebRequest client for search, level records, daily data, and GMD downloads.
+- JSON response validation and tolerant search/record parsing.
+- Newest-first historical record downloader. It retries only when the response contains GDHistory's explicit no-level-data message.
+- GMD import through the `hjfod.gmd-api` dependency (version 1.5.0 or newer), which supports Geometry Dash 2.2081.
+- Initial in-game search results layer wired to `LevelSearchLayer::onSearch`.
+- Initial in-game daily archive layer wired to `DailyLevelPage::show`.
+
+Not yet complete or verified:
+- Exact live response schema for `/api/v1/daily/` and level-record payloads must be validated in-game.
+- Search pagination, creator/difficulty/download filters, and the remaining search modes.
+- Complete Map Pack, Gauntlet, comments, likes, ratings, and leaderboard disablement.
+- Audit of all remaining RobTop network entry points.
+- Windows build and runtime test against the target SDK/game versions.
+
+The current UI is an initial functional path, not a finished replacement. The repository should not be considered release-ready until the remaining items are implemented and tested.
