@@ -6,6 +6,10 @@
 using namespace geode::prelude;
 
 class $modify(GDHistoryDailyLevelPage, DailyLevelPage) {
+    void tryGetDailyStatus() {
+        // The normal RobTop daily-status request is intentionally suppressed.
+    }
+
     void show() {
         auto scene = GDHistoryDailyLevelsLayer::scene();
         if (scene) {
