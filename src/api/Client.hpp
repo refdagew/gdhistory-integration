@@ -4,7 +4,10 @@
 #include <Geode/utils/async.hpp>
 #include <Geode/utils/web.hpp>
 
+#include <algorithm>
+#include <chrono>
 #include <cstdint>
+#include <functional>
 #include <string>
 #include <utility>
 
@@ -16,7 +19,7 @@ namespace gdhistory::api {
 /// are dispatched by Geode on the main thread.
 class Client {
 public:
-    using ResponseCallback = geode::Function<void(geode::utils::web::WebResponse)>;
+    using ResponseCallback = std::function<void(geode::utils::web::WebResponse)>;
 
     Client() = default;
     Client(Client const&) = delete;
@@ -44,7 +47,7 @@ public:
             request.param("query", std::move(query));
         }
 
-        this->send(std::move(request), searchLevels(), std::move(callback));
+        this->send(std::move(request), ::gdhistory::api::searchLevels(), std::move(callback));
     }
 
     /// Retrieve a level and its historical records.
