@@ -67,7 +67,13 @@ public:
         std::uint64_t recordID,
         ResponseCallback callback
     ) {
-        this->get(api::downloadGMD(levelID, recordID), std::move(callback));
+        auto request = baseRequest();
+        request.header("Accept", "*/*");
+        this->send(
+            std::move(request),
+            api::downloadGMD(levelID, recordID),
+            std::move(callback)
+        );
     }
 
 private:
