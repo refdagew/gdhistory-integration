@@ -11,9 +11,9 @@
 
 class GDHistorySearchResultsLayer final : public cocos2d::CCLayerColor {
 public:
-    static cocos2d::CCScene* scene(std::string query);
-    static GDHistorySearchResultsLayer* create(std::string query);
-    bool init(std::string query);
+    static cocos2d::CCScene* scene(std::string query, std::string sort = "cache_downloads:desc");
+    static GDHistorySearchResultsLayer* create(std::string query, std::string sort);
+    bool init(std::string query, std::string sort);
 
 private:
     gdhistory::api::Client m_client;
