@@ -9,6 +9,12 @@
 
 using namespace geode::prelude;
 
+void GDHistorySearchResultsLayer::onExit() {
+    m_client.cancel();
+    m_downloader.cancel();
+    CCLayerColor::onExit();
+}
+
 CCScene* GDHistorySearchResultsLayer::scene(std::string query, std::string sort) {
     auto scene = CCScene::create();
     auto layer = GDHistorySearchResultsLayer::create(std::move(query), std::move(sort));
