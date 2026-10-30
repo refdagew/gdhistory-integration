@@ -72,7 +72,7 @@ void HistoryClient::searchLevels(
     HttpCallback callback
 ) {
     std::ostringstream url;
-    url << searchLevels() << "?limit=" << limit << "&offset=" << offset;
+    url << ::gdhistory::api::searchLevels() << "?limit=" << limit << "&offset=" << offset;
 
     if (!query.empty()) {
         url << "&query=" << encodeQuery(query);
