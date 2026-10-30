@@ -11,17 +11,17 @@
 
 using namespace geode::prelude;
 
-CCScene* GDHistorySearchResultsLayer::scene(std::string query) {
+CCScene* GDHistorySearchResultsLayer::scene(std::string query, std::string sort) {
     auto scene = CCScene::create();
-    auto layer = GDHistorySearchResultsLayer::create(std::move(query));
+    auto layer = GDHistorySearchResultsLayer::create(std::move(query), std::move(sort));
     if (!scene || !layer) return nullptr;
     scene->addChild(layer);
     return scene;
 }
 
-GDHistorySearchResultsLayer* GDHistorySearchResultsLayer::create(std::string query) {
+GDHistorySearchResultsLayer* GDHistorySearchResultsLayer::create(std::string query, std::string sort) {
     auto ret = new GDHistorySearchResultsLayer();
-    if (ret && ret->init(std::move(query))) {
+    if (ret && ret->init(std::move(query), std::move(sort))) {
         ret->autorelease();
         return ret;
     }
@@ -29,7 +29,7 @@ GDHistorySearchResultsLayer* GDHistorySearchResultsLayer::create(std::string que
     return nullptr;
 }
 
-bool GDHistorySearchResultsLayer::init(std::string query) {
+bool GDHistorySearchResultsLayer::init(std::string query, std::string sort) {
     if (!CCLayerColor::initWithColor({18, 19, 30, 255})) {
         return false;
     }
@@ -66,7 +66,8 @@ bool GDHistorySearchResultsLayer::init(std::string query) {
         0,
         [this](gdhistory::api::JsonResponse response) {
             this->onSearchResponse(std::move(response));
-        }
+        },
+        std::move(sort)
     );
 
     return true;
