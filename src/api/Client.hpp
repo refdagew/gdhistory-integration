@@ -133,14 +133,43 @@ private:
         this->send(std::move(request), std::move(url), std::move(callback));
     }
 
+    static bool isTransientNetworkError(int code) {
+        // libcurl reports these before receiving an HTTP response. Both can be
+        // transient when a connection is interrupted or a TLS handshake fails.
+        return code == 35 || code == 55;
+    }
+
     void send(
         geode::utils::web::WebRequest request,
         std::string url,
-        ResponseCallback callback
+        ResponseCallback callback,
+        int retriesRemaining = 2
     ) {
+        // Keep a copy of the configured request so a retry preserves headers,
+        // query parameters, and the selected HTTP version.
+        auto retryRequest = request;
         m_request.spawn(
-            request.get(std::move(url)),
-            [callback = std::move(callback)](geode::utils::web::WebResponse response) mutable {
+            request.get(url),
+            [this,
+             retryRequest = std::move(retryRequest),
+             url = std::move(url),
+             callback = std::move(callback),
+             retriesRemaining](geode::utils::web::WebResponse response) mutable {
+                if (retriesRemaining > 0 && isTransientNetworkError(response.code())) {
+                    log::warn(
+                        "GDHistory request failed with transient cURL error {}; retrying ({} attempt(s) left)",
+                        response.code(),
+                        retriesRemaining
+                    );
+                    this->send(
+                        std::move(retryRequest),
+                        std::move(url),
+                        std::move(callback),
+                        retriesRemaining - 1
+                    );
+                    return;
+                }
+
                 callback(std::move(response));
             }
         );
