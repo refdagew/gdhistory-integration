@@ -14,6 +14,8 @@
 #include "Endpoints.hpp"
 #include "Json.hpp"
 
+using namespace geode::prelude;
+
 namespace gdhistory::api {
 
 /// Native GDHistory HTTP client. Requests are asynchronous and their callbacks
