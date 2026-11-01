@@ -157,7 +157,11 @@ private:
         // Function-argument evaluation order is unspecified; doing both inside
         // spawn(request.get(url), [url = std::move(url)]...) can empty the URL
         // before request.get() reads it, producing cURL error 3.
-        auto future = request.get(url);
+        // Geode 5.11.2 enables TLS early data for the exact uppercase
+        // method "GET". Sending the same safe, read-only method in lowercase
+        // bypasses that code path; Django normalizes REQUEST_METHOD to
+        // uppercase before routing, so GDHistory still receives a GET.
+        auto future = request.send("get", url);
         m_request.spawn(
             std::move(future),
             [this,
