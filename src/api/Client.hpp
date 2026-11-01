@@ -118,6 +118,9 @@ private:
         auto request = geode::utils::web::WebRequest();
         request
             .header("Accept", std::move(accept))
+            // Do not leave keep-alive sockets around; this avoids retrying over
+            // a stale connection after the server or network has closed it.
+            .header("Connection", "close")
             .userAgent("gdhistory-integration/0.1.0 (Geode mod)")
             .timeout(std::chrono::seconds(30))
             .followRedirects(true)
