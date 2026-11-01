@@ -120,7 +120,11 @@ private:
             .header("Accept", std::move(accept))
             .userAgent("gdhistory-integration/0.1.0 (Geode mod)")
             .timeout(std::chrono::seconds(30))
-            .followRedirects(true);
+            .followRedirects(true)
+            // Avoid intermittent Windows libcurl failures seen with HTTP/2
+            // connections (CURLE_SSL_CONNECT_ERROR / CURLE_SEND_ERROR).
+            // GDHistory supports HTTP/1.1, so use the more compatible protocol.
+            .version(geode::utils::web::HttpVersion::VERSION_1_1);
         return request;
     }
 
