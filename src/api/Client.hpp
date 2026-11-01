@@ -153,8 +153,13 @@ private:
         // Keep a copy of the configured request so a retry preserves headers,
         // query parameters, and the selected HTTP version.
         auto retryRequest = request;
+        // Start the transfer before moving url into the completion callback.
+        // Function-argument evaluation order is unspecified; doing both inside
+        // spawn(request.get(url), [url = std::move(url)]...) can empty the URL
+        // before request.get() reads it, producing cURL error 3.
+        auto future = request.get(url);
         m_request.spawn(
-            request.get(url),
+            std::move(future),
             [this,
              retryRequest = std::move(retryRequest),
              url = std::move(url),
