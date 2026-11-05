@@ -4,6 +4,7 @@
 #include <Geode/utils/async.hpp>
 #include <Geode/utils/web.hpp>
 
+#include <algorithm>
 #include <atomic>
 #include <chrono>
 #include <cstdint>
