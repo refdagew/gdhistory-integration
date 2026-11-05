@@ -1,19 +1,3 @@
-#include <Geode/Geode.hpp>
-#include <Geode/modify/DailyLevelPage.hpp>
-
-#include "../ui/DailyLevelsLayer.hpp"
-
-using namespace geode::prelude;
-
-class $modify(GDHistoryDailyLevelPage, DailyLevelPage) {
-    void tryGetDailyStatus() {
-        // The normal RobTop daily-status request is intentionally suppressed.
-    }
-
-    void show() {
-        auto scene = GDHistoryDailyLevelsLayer::scene();
-        if (scene) {
-            CCDirector::sharedDirector()->pushScene(scene);
-        }
-    }
-};
+// No DailyLevelPage hooks are needed: CreatorLayer owns the Daily, Weekly, and
+// Event level-browser buttons. Avoid globally replacing show(), which can be
+// reached from unrelated UI flows.
