@@ -19,3 +19,7 @@ endif()
 
 add_subdirectory($ENV{GEODE_SDK} ${CMAKE_CURRENT_BINARY_DIR}/geode)
 setup_geode_mod(${PROJECT_NAME})
+
+# Use the Windows TLS/HTTP stack as a fallback when Geode's libcurl TLS
+# handshake fails. WinHTTP keeps certificate validation enabled.
+target_link_libraries(${PROJECT_NAME} PRIVATE winhttp)
