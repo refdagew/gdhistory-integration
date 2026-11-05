@@ -26,7 +26,7 @@ struct GMDImportResult {
 /// The temporary file is kept inside this mod's save directory and removed
 /// after import; no GDLVL conversion or browser download is involved.
 inline GMDImportResult importGMD(
-    geode::utils::web::WebResponse const& response,
+    ApiResponse const& response,
     std::uint64_t levelID,
     std::uint64_t recordID
 ) {
