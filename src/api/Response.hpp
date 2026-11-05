@@ -9,12 +9,36 @@
 
 namespace gdhistory::api {
 
+/// Transport-neutral response used by both Geode's libcurl client and the
+/// native Windows WinHTTP fallback.
+struct ApiResponse {
+    int statusCode = 0;
+    std::string body;
+    std::string error;
+
+    bool ok() const {
+        return statusCode >= 200 && statusCode < 300 && error.empty();
+    }
+
+    int code() const {
+        return statusCode;
+    }
+};
+
+inline bool isHttpSuccess(ApiResponse const& response) {
+    return response.ok();
+}
+
 inline bool isHttpSuccess(geode::utils::web::WebResponse const& response) {
     return response.ok() && response.code() >= 200 && response.code() < 300;
 }
 
-/// Copies the response bytes without assuming that the payload is UTF-8.
-/// Use this for GMD downloads, which must remain byte-for-byte intact.
+/// Copies response bytes without assuming UTF-8. GMD downloads must remain
+/// byte-for-byte intact.
+inline std::string responseBytes(ApiResponse const& response) {
+    return response.body;
+}
+
 inline std::string responseBytes(geode::utils::web::WebResponse const& response) {
     auto const& bytes = response.data();
     if (bytes.empty()) {
