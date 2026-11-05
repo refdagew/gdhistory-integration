@@ -17,7 +17,7 @@ namespace gdhistory::api {
 
 struct HistoricalDownloadResult {
     std::uint64_t recordID = 0;
-    std::optional<geode::utils::web::WebResponse> response;
+    std::optional<ApiResponse> response;
     std::string error;
 
     bool hasData() const {
@@ -85,7 +85,7 @@ private:
         m_client.downloadGMD(
             m_levelID,
             recordID,
-            [this, recordID](geode::utils::web::WebResponse response) mutable {
+            [this, recordID](ApiResponse response) mutable {
                 auto body = responseBytes(response);
 
                 if (isRecordWithoutLevelData(body)) {
@@ -98,7 +98,7 @@ private:
                         fmt::format(
                             "GDHistory GMD download failed (HTTP {}): {}",
                             response.code(),
-                            response.errorMessage()
+                            response.error
                         )
                     );
                     return;
@@ -116,7 +116,7 @@ private:
 
     void finishSuccess(
         std::uint64_t recordID,
-        geode::utils::web::WebResponse response
+        ApiResponse response
     ) {
         if (!m_callback) return;
 
