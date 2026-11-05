@@ -4,37 +4,46 @@
 #include <Geode/utils/async.hpp>
 #include <Geode/utils/web.hpp>
 
-#include <algorithm>
+#include <atomic>
 #include <chrono>
 #include <cstdint>
 #include <functional>
+#include <memory>
 #include <string>
+#include <thread>
 #include <utility>
 
 #include "Endpoints.hpp"
 #include "Json.hpp"
+#include "WinHttpTransport.hpp"
 
 using namespace geode::prelude;
 
 namespace gdhistory::api {
 
-/// Native GDHistory HTTP client. Requests are asynchronous and their callbacks
-/// are dispatched by Geode on the main thread.
+/// Native GDHistory client. It uses Geode's WebRequest first and falls back to
+/// Windows WinHTTP for TLS/send failures. Both transports retain certificate
+/// verification; the fallback uses the operating system's TLS trust store.
 class Client {
 public:
-    using ResponseCallback = std::function<void(geode::utils::web::WebResponse)>;
+    using ResponseCallback = std::function<void(ApiResponse)>;
     using JsonCallback = std::function<void(JsonResponse)>;
 
     Client() = default;
     Client(Client const&) = delete;
     Client& operator=(Client const&) = delete;
 
-    /// Cancels the currently active request, if any.
-    void cancel() {
-        m_request.cancel();
+    ~Client() {
+        this->cancel();
     }
 
-    /// Search levels using GDHistory's advanced search endpoint.
+    void cancel() {
+        m_request.cancel();
+        if (m_cancelToken) {
+            m_cancelToken->store(true, std::memory_order_relaxed);
+        }
+    }
+
     void searchLevels(
         std::string query,
         int limit,
@@ -55,12 +64,10 @@ public:
         this->send(std::move(request), ::gdhistory::api::searchLevels(), std::move(callback));
     }
 
-    /// Retrieve a level and its historical records.
     void getLevelRecords(std::uint64_t levelID, ResponseCallback callback) {
         this->get(levelRecords(levelID), std::move(callback));
     }
 
-    /// Retrieve GDHistory's daily-level collection.
     void getDailyLevels(ResponseCallback callback) {
         this->get(dailyLevels(), std::move(callback));
     }
@@ -74,7 +81,7 @@ public:
     ) {
         this->searchLevels(
             std::move(query), limit, offset,
-            [callback = std::move(callback)](geode::utils::web::WebResponse response) mutable {
+            [callback = std::move(callback)](ApiResponse response) mutable {
                 callback(parseJsonResponse(response));
             },
             std::move(sort)
@@ -84,7 +91,7 @@ public:
     void getLevelRecordsJSON(std::uint64_t levelID, JsonCallback callback) {
         this->getLevelRecords(
             levelID,
-            [callback = std::move(callback)](geode::utils::web::WebResponse response) mutable {
+            [callback = std::move(callback)](ApiResponse response) mutable {
                 callback(parseJsonResponse(response));
             }
         );
@@ -92,14 +99,13 @@ public:
 
     void getDailyLevelsJSON(JsonCallback callback) {
         this->getDailyLevels(
-            [callback = std::move(callback)](geode::utils::web::WebResponse response) mutable {
+            [callback = std::move(callback)](ApiResponse response) mutable {
                 callback(parseJsonResponse(response));
             }
         );
     }
 
-    /// Download a historical record in GMD format. GDLVL is intentionally
-    /// unsupported by this project.
+    /// Historical downloads are always GMD. GDLVL is intentionally unsupported.
     void downloadGMD(
         std::uint64_t levelID,
         std::uint64_t recordID,
@@ -115,6 +121,7 @@ public:
 
 private:
     geode::async::TaskHolder<geode::utils::web::WebResponse> m_request;
+    std::shared_ptr<std::atomic_bool> m_cancelToken;
 
     static geode::utils::web::WebRequest baseRequest(std::string accept = "application/json") {
         auto request = geode::utils::web::WebRequest();
@@ -131,51 +138,82 @@ private:
         this->send(std::move(request), std::move(url), std::move(callback));
     }
 
-    static bool isTransientNetworkError(int code) {
-        // libcurl reports these before receiving an HTTP response. Both can be
-        // transient when a connection is interrupted or a TLS handshake fails.
-        return code == 35 || code == 55;
+    static ApiResponse fromGeode(geode::utils::web::WebResponse const& response) {
+        return ApiResponse {
+            .statusCode = response.code(),
+            .body = responseBytes(response),
+            .error = std::string(response.errorMessage())
+        };
+    }
+
+    static std::string requestHeaders(geode::utils::web::WebRequest const& request) {
+        std::string headers;
+        for (auto const& [name, values] : request.getHeaders()) {
+            for (auto const& value : values) {
+                headers += name;
+                headers += ": ";
+                headers += value;
+                headers += "\r\n";
+            }
+        }
+        return headers;
     }
 
     void send(
         geode::utils::web::WebRequest request,
         std::string url,
-        ResponseCallback callback,
-        int retriesRemaining = 2
+        ResponseCallback callback
     ) {
-        // Keep a copy of the configured request so a retry preserves headers,
-        // query parameters, and the selected HTTP version.
+        this->cancel();
+        auto token = std::make_shared<std::atomic_bool>(false);
+        m_cancelToken = token;
+
         auto retryRequest = request;
-        // Create the future before moving the URL into the completion callback.
-        // This avoids unspecified argument evaluation order emptying the URL
-        // before WebRequest reads it.
-        // Use Geode's normal uppercase GET method: lowercase custom methods
-        // do not reliably preserve normal GET semantics and did not resolve
-        // the TLS handshake failures.
         auto future = request.get(url);
         m_request.spawn(
             std::move(future),
-            [this,
-             retryRequest = std::move(retryRequest),
+            [retryRequest = std::move(retryRequest),
              url = std::move(url),
              callback = std::move(callback),
-             retriesRemaining](geode::utils::web::WebResponse response) mutable {
-                if (retriesRemaining > 0 && isTransientNetworkError(response.code())) {
-                    log::warn(
-                        "GDHistory request failed with transient cURL error {}; retrying ({} attempt(s) left)",
-                        response.code(),
-                        retriesRemaining
-                    );
-                    this->send(
-                        std::move(retryRequest),
-                        std::move(url),
-                        std::move(callback),
-                        retriesRemaining - 1
-                    );
+             token](geode::utils::web::WebResponse response) mutable {
+                if (token->load(std::memory_order_relaxed)) return;
+
+                // -35 is a TLS handshake failure; -55 is a send failure.
+                // Retry these through WinHTTP, which uses the Windows TLS
+                // stack and native certificate store rather than Geode's
+                // bundled libcurl/OpenSSL transport.
+                if (response.code() == 35 || response.code() == 55) {
+                    auto fullUrl = winhttp_transport::makeUrl(retryRequest, url);
+                    auto headers = requestHeaders(retryRequest);
+
+                    try {
+                        std::thread(
+                            [token,
+                             fullUrl = std::move(fullUrl),
+                             headers = std::move(headers),
+                             callback = std::move(callback)]() mutable {
+                                auto result = winhttp_transport::perform(fullUrl, headers);
+                                geode::queueInMainThread(
+                                    [token, callback = std::move(callback),
+                                     result = std::move(result)]() mutable {
+                                        if (token->load(std::memory_order_relaxed)) return;
+                                        callback(std::move(result));
+                                    }
+                                );
+                            }
+                        ).detach();
+                    } catch (...) {
+                        ApiResponse fallbackError {
+                            .statusCode = -10002,
+                            .body = {},
+                            .error = "Could not start the native Windows network fallback."
+                        };
+                        callback(std::move(fallbackError));
+                    }
                     return;
                 }
 
-                callback(std::move(response));
+                callback(fromGeode(response));
             }
         );
     }
