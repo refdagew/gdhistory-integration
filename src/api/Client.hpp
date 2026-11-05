@@ -120,16 +120,9 @@ private:
         auto request = geode::utils::web::WebRequest();
         request
             .header("Accept", std::move(accept))
-            // Do not leave keep-alive sockets around; this avoids retrying over
-            // a stale connection after the server or network has closed it.
-            .header("Connection", "close")
             .userAgent("gdhistory-integration/0.1.0 (Geode mod)")
             .timeout(std::chrono::seconds(30))
-            .followRedirects(true)
-            // Avoid intermittent Windows libcurl failures seen with HTTP/2
-            // connections (CURLE_SSL_CONNECT_ERROR / CURLE_SEND_ERROR).
-            // GDHistory supports HTTP/1.1, so use the more compatible protocol.
-            .version(geode::utils::web::HttpVersion::VERSION_1_1);
+            .followRedirects(true);
         return request;
     }
 
@@ -153,15 +146,13 @@ private:
         // Keep a copy of the configured request so a retry preserves headers,
         // query parameters, and the selected HTTP version.
         auto retryRequest = request;
-        // Start the transfer before moving url into the completion callback.
-        // Function-argument evaluation order is unspecified; doing both inside
-        // spawn(request.get(url), [url = std::move(url)]...) can empty the URL
-        // before request.get() reads it, producing cURL error 3.
-        // Geode 5.11.2 enables TLS early data for the exact uppercase
-        // method "GET". Sending the same safe, read-only method in lowercase
-        // bypasses that code path; Django normalizes REQUEST_METHOD to
-        // uppercase before routing, so GDHistory still receives a GET.
-        auto future = request.send("get", url);
+        // Create the future before moving the URL into the completion callback.
+        // This avoids unspecified argument evaluation order emptying the URL
+        // before WebRequest reads it.
+        // Use Geode's normal uppercase GET method: lowercase custom methods
+        // do not reliably preserve normal GET semantics and did not resolve
+        // the TLS handshake failures.
+        auto future = request.get(url);
         m_request.spawn(
             std::move(future),
             [this,
