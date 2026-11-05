@@ -36,7 +36,7 @@ inline std::wstring widen(std::string_view value) {
     int count = MultiByteToWideChar(CP_UTF8, MB_ERR_INVALID_CHARS, value.data(),
         static_cast<int>(value.size()), nullptr, 0);
     if (count <= 0) return {};
-    std::wstring out(static_cast<std::size_t>(count), L'\\0');
+    std::wstring out(static_cast<std::size_t>(count), L'\0');
     MultiByteToWideChar(CP_UTF8, MB_ERR_INVALID_CHARS, value.data(),
         static_cast<int>(value.size()), out.data(), count);
     return out;
@@ -137,7 +137,7 @@ inline ApiResponse perform(std::string const& url, std::string const& headers) {
         DWORD available = 0;
         if (!WinHttpQueryDataAvailable(requestHandle.get(), &available)) return fail("body size query");
         if (available == 0) break;
-        std::string chunk(static_cast<std::size_t>(available), '\\0');
+        std::string chunk(static_cast<std::size_t>(available), '\0');
         DWORD received = 0;
         if (!WinHttpReadData(requestHandle.get(), chunk.data(), available, &received)) return fail("body read");
         chunk.resize(received);
