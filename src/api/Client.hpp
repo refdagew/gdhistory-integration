@@ -179,11 +179,12 @@ private:
              token](geode::utils::web::WebResponse response) mutable {
                 if (token->load(std::memory_order_relaxed)) return;
 
-                // -35 is a TLS handshake failure; -55 is a send failure.
-                // Retry these through WinHTTP, which uses the Windows TLS
-                // stack and native certificate store rather than Geode's
-                // bundled libcurl/OpenSSL transport.
-                if (response.code() == 35 || response.code() == 55) {
+                // Geode stores transport errors as NEGATIVE values in
+                // WebResponse::code(). GDIntercept reports these as -35
+                // (CURLE_SSL_CONNECT_ERROR) and -55 (CURLE_SEND_ERROR).
+                // The old positive comparisons meant this fallback was
+                // never entered, even though the code was present.
+                if (response.code() == -35 || response.code() == -55) {
                     auto fullUrl = winhttp_transport::makeUrl(retryRequest, url);
                     auto headers = requestHeaders(retryRequest);
 
